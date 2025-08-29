@@ -87,126 +87,98 @@ async function calculate(){
     let dd = base + head*FT_PER_KT;
     if(mode==="conv" && descending) dd += 15;
     show(Math.round(dd)+" ft", mode==="conv" ? "Drop Down Convencional" : "Drop Down Enhanced",
-         "Headwind usado: "+Math.round(head)+" kt  •  Alt pressão: "+Math.round(alt)+" ft");
+         "Headwind: "+Math.round(head)+" kt  •  Alt pressão: "+Math.round(alt)+" ft");
   } else {
     const tbl = nearestWeightTable(db.rto, gw);
     if(!tbl){ return show("—","Base não carregada"); }
     const dist = interp2(oat, alt, tbl.oats, tbl.alts, tbl.dist);
     const fac  = interp2(oat, alt, tbl.oats, tbl.alts, tbl.fac);
-    const windBenefit = head * fac; // divisor = 1
+    const windBenefit = head * fac;
     const total = dist + windBenefit + filter;
     show(Math.round(total)+" m", "RTO Clear Area",
          "Benefício vento: "+Math.round(windBenefit)+" m  •  EAPS/IBF: "+filter+" m  •  Alt pressão: "+Math.round(alt)+" ft");
   }
 }
-window.addEventListener("DOMContentLoaded", ()=>{
 
 // --- UX Enhancements v2: auto-select, clear-on-zero, auto-advance by length, clear-all ---
 function enhanceInputs(){
-  const config = {
-    gw:4, oat:2, wind:2, wra:2, elev:4, qnh:4, altManualInput:4
-  };
-  const order = ["gw","oat","wind","wra","elev","qnh","altManualInput"];
+  const config = { gw:4, oat:2, wind:2, wra:2, elev:4, qnh:4, altManualInput:4 };
+  const order = ["gw","oat","qnh","elev","altManualInput","wind","wra"];
   const els = order.map(id => document.getElementById(id)).filter(Boolean);
 
   // prevent wheel change on number inputs (desktop)
-  els.forEach(el => {
-    el.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); }, {passive:false});
-  });
+  els.forEach(el => { el.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); }, {passive:false}); });
 
-  function cleanLen(v){
-    // length ignoring sign and decimals
-    return (v||"").replace(/[^0-9]/g,"").length;
-  }
+  function cleanLen(v){ return (v||"").replace(/[^0-9]/g,"").length; }
 
   els.forEach((el, idx) => {
-    // 1-tap overwrite + clear zero
     el.addEventListener('focus', () => {
-      if(el.hasAttribute('data-autoselect')){
-        setTimeout(() => { try{ el.select(); }catch{} }, 0);
-      }
+      if(el.hasAttribute('data-autoselect')){ setTimeout(() => { try{ el.select(); }catch{} }, 0); }
       if(el.value === "0"){ el.value = ""; }
     });
-    // Auto-advance on Enter
     el.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter'){
-        e.preventDefault();
-        const next = els[idx+1];
-        if(next){ next.focus(); } else { const btn = document.getElementById('calcBtn'); if(btn) btn.click(); }
-      }
+      if(e.key === 'Enter'){ e.preventDefault(); const next = els[idx+1]; if(next){ next.focus(); } else { const btn = document.getElementById('calcBtn'); if(btn) btn.click(); } }
     });
-    // Auto-advance by digit length
     el.addEventListener('input', () => {
       const maxL = config[el.id];
       if(maxL && cleanLen(el.value) >= maxL){
-        const next = els[idx+1];
-        if(next){ next.focus(); }
+        const next = els[idx+1]; if(next){ next.focus(); }
       }
+      calculate(); // live update
     });
   });
 
-  // Clear all button
   const clearBtn = document.getElementById('clearBtn');
   if(clearBtn){
     clearBtn.addEventListener('click', (e)=>{
       e.preventDefault();
-      // reset numeric fields
-      if(document.getElementById('gw')) document.getElementById('gw').value = "";
-      if(document.getElementById('oat')) document.getElementById('oat').value = "";
-      if(document.getElementById('wind')) document.getElementById('wind').value = "";
-      if(document.getElementById('wra')) document.getElementById('wra').value = "";
-      if(document.getElementById('elev')) document.getElementById('elev').value = "";
-      if(document.getElementById('qnh')) document.getElementById('qnh').value = "1013";
-      if(document.getElementById('altManualInput')) document.getElementById('altManualInput').value = "";
-      // reset toggles to padrão: Trig, Alt Auto, Desc OFF
+      const ids=["gw","oat","wind","wra","elev","altManualInput"]; ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
+      const q=document.getElementById('qnh'); if(q) q.value="1013";
+      const filter=document.getElementById('filter'); if(filter) filter.value="0";
+      // toggles padrão
       const setSegActive = (segId, btnId) => {
-        const seg = document.getElementById(segId);
-        if(!seg) return;
+        const seg = document.getElementById(segId); if(!seg) return;
         Array.from(seg.querySelectorAll("button")).forEach(b=>b.classList.remove("active"));
         const b = document.getElementById(btnId); if(b) b.classList.add("active");
       };
       setSegActive("windSeg","windTrig");
       setSegActive("altSeg","altAuto");
-      if(document.getElementById('altAutoRow')) document.getElementById('altAutoRow').style.display="flex";
-      if(document.getElementById('altManualRow')) document.getElementById('altManualRow').style.display="none";
-      const desc = document.getElementById('descToggle'); if(desc) desc.checked = false;
-      // reset filter
-      const filter = document.getElementById('filter'); if(filter) filter.value = "0";
-      // recompute
-      if(typeof calculate === 'function'){ calculate(); }
-      // focus primeiro campo
-      const first = document.getElementById(order[0]); if(first) first.focus();
+      document.getElementById('altAutoRow').style.display="flex";
+      document.getElementById('altManualRow').style.display="none";
+      const desc=document.getElementById('descToggle'); if(desc) desc.checked=false;
+      calculate();
+      const first=document.getElementById('gw'); if(first) first.focus();
     });
   }
 }
-enhanceInputs();
 
+window.addEventListener("DOMContentLoaded", ()=>{
   // Wind toggle
-  $("windTrig").addEventListener("click", ()=>{ setSegActive("windSeg","windTrig"); calculate(); });
-  $("windS97").addEventListener("click", ()=>{ setSegActive("windSeg","windS97"); calculate(); });
+  document.getElementById("windTrig").addEventListener("click", ()=>{ setSegActive("windSeg","windTrig"); calculate(); });
+  document.getElementById("windS97").addEventListener("click", ()=>{ setSegActive("windSeg","windS97"); calculate(); });
   // Altitude toggle
-  $("altAuto").addEventListener("click", ()=>{
-    setSegActive("altSeg","altAuto"); $("altAutoRow").style.display="flex"; $("altManualRow").style.display="none"; calculate();
+  document.getElementById("altAuto").addEventListener("click", ()=>{
+    setSegActive("altSeg","altAuto"); document.getElementById("altAutoRow").style.display="flex"; document.getElementById("altManualRow").style.display="none"; calculate();
   });
-  $("altManual").addEventListener("click", ()=>{
-    setSegActive("altSeg","altManual"); $("altAutoRow").style.display="none"; $("altManualRow").style.display="flex"; calculate();
+  document.getElementById("altManual").addEventListener("click", ()=>{
+    setSegActive("altSeg","altManual"); document.getElementById("altAutoRow").style.display="none"; document.getElementById("altManualRow").style.display="flex"; calculate();
   });
-  // Inputs
-  ["mode","gw","oat","wind","wra","elev","qnh","altManualInput","filter","descToggle"].forEach(id=>{
-    const el=$(id); if(el){ el.addEventListener("input", calculate); el.addEventListener("change", calculate); }
+  // Inputs that aren't in the auto-enhance list
+  ["mode","filter","descToggle"].forEach(id=>{
+    const el=document.getElementById(id); if(el){ el.addEventListener("input", calculate); el.addEventListener("change", calculate); }
   });
-  $("calcBtn").addEventListener("click", e=>{ e.preventDefault(); calculate(); });
-  // DB import/export
-  $("exportBtn").addEventListener("click", e=>{
+  document.getElementById("calcBtn").addEventListener("click", e=>{ e.preventDefault(); calculate(); });
+  document.getElementById("exportBtn").addEventListener("click", e=>{
     e.preventDefault();
     const payload = JSON.stringify(DB||{"conv":{},"enh":{},"rto":{}}, null, 2);
     const blob = new Blob([payload], {type:"application/json"});
     const a = document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="db.json"; a.click();
   });
-  $("fileInput").addEventListener("change", async e=>{
+  document.getElementById("fileInput").addEventListener("change", async e=>{
     const file=e.target.files[0]; if(!file) return;
     const text=await file.text();
     try{ DB = JSON.parse(text); alert("Base de dados carregada!"); calculate(); }catch(err){ alert("JSON inválido."); }
   });
+  enhanceInputs();
   calculate();
 });

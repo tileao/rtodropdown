@@ -1,0 +1,105 @@
+
+<!doctype html>
+<html lang="pt-br">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="styles.css">
+<title>AW139 – RTO & DropDown</title>
+<body>
+  <h1>AW139 — RTO & DropDown</h1>
+
+  <div class="card">
+    <div class="row">
+      <div class="col">
+        <label>Modo</label>
+        <select id="mode">
+          <option value="conv">DropDown – Convencional</option>
+          <option value="enh">DropDown – Enhanced</option>
+          <option value="rto">RTO (Clear Area)</option>
+        </select>
+      </div>
+      <div class="col">
+        <label>Decomposição do Vento</label>
+        <div class="segment" id="windSeg">
+          <button id="windTrig" class="active" data-mode="trig">Trig</button>
+          <button id="windS97" data-mode="s97">S97</button>
+        </div>
+      </div>
+      <div class="col">
+        <label>Trajetória descendente (+15 ft)</label>
+        <label class="tgl">
+          <input id="descToggle" type="checkbox">
+          <span class="trk"><span class="thm"></span></span>
+          <span class="lbl">Descendente</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col"><label>Peso (GW) <span class="unit">[kg]</span></label><input id="gw" type="number" inputmode="numeric" value="6500" enterkeyhint="next" data-autoselect="1"></div>
+      <div class="col"><label>Temperatura – OAT <span class="unit">[°C]</span></label><input id="oat" type="number" inputmode="numeric" value="25" enterkeyhint="next" data-autoselect="1"></div>
+      <div class="col"><label>Vento reportado <span class="unit">[kt]</span></label><input id="wind" type="number" inputmode="numeric" value="0" enterkeyhint="next" data-autoselect="1"></div>
+    </div>
+
+    <div class="row">
+      <div class="col"><label>Ângulo vs. trajetória (WRA) <span class="unit">[°]</span></label><input id="wra" type="number" inputmode="numeric" value="0" enterkeyhint="next" data-autoselect="1"></div>
+      <div class="col">
+        <label>Altitude (auto QNH / manual)</label>
+        <div class="segment" id="altSeg">
+          <button id="altAuto" class="active" data-mode="auto">Auto</button>
+          <button id="altManual" data-mode="manual">Manual</button>
+        </div>
+      </div>
+      <div class="col">
+        <label>Filtro (RTO)</label>
+        <select id="filter">
+          <option value="0">Nenhum</option>
+          <option value="110">EAPS OFF (+110 m)</option>
+          <option value="170">IBF (+170 m)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row" id="altAutoRow">
+      <div class="col"><label>Elevação do local <span class="unit">[ft]</span></label><input id="elev" type="number" inputmode="numeric" value="0" enterkeyhint="next" data-autoselect="1"></div>
+      <div class="col"><label>QNH <span class="unit">[hPa]</span></label><input id="qnh" type="number" inputmode="numeric" value="1013" enterkeyhint="next" data-autoselect="1"></div>
+      <div class="col"><label>Altitude de Pressão (calc.) <span class="unit">[ft]</span></label><input id="altDisplay" class="readonly" type="number" inputmode="numeric" value="0" readonly></div>
+    </div>
+
+    <div class="row" id="altManualRow" style="display:none">
+      <div class="col"><label>Altitude de Pressão (manual) <span class="unit">[ft]</span></label><input id="altManualInput" type="number" inputmode="numeric" value="0" enterkeyhint="next" data-autoselect="1"></div>
+    </div>
+
+    <input id="alt" type="hidden" value="0">
+
+    <hr>
+    <div class="switch">
+      <div class="chip">Bilinear ALT×OAT</div>
+      <div class="chip">Head/Crosswind</div>
+      <div class="chip">QNH→Alt Pressão</div>
+      <div class="chip">Offline</div>
+      <div class="chip">PWA iPhone</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="result" id="result">–</div>
+    <div class="small" id="unit">Selecione modo e insira os dados</div>
+    <div class="small" id="note"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn secondary" id="exportBtn">Exportar db.json</button>
+      <label class="btn secondary" for="fileInput">Importar db.json</label>
+      <input id="fileInput" type="file" accept="application/json" style="display:none">
+      <button class="btn secondary" id="clearBtn">Limpar tudo</button>
+      <button class="btn" id="calcBtn">Calcular</button>
+    </div>
+  </div>
+
+  <div class="footer">Instale pelo Safari (via URL): Compartilhar → “Adicionar à Tela de Início”.</div>
+
+  <script src="engine.js"></script>
+  <script> if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.v17.js"); </script>
+</body>
+</html>
